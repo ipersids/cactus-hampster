@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package host;
+
+message HostRequest {
+	oneof msg {
+		PingMessage ping = 1;
+		PongMessage pong = 2;
+	}
+}
+
+message ServerResponse {
+	oneof msg {
+		PingMessage ping = 1;
+		PongMessage pong = 2;
+	}
+}
+
+message PingMessage {
+	string msg = 1;
+}
+
+message PongMessage {
+	string msg = 1;
+}
