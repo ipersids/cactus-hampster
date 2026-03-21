@@ -1,0 +1,9 @@
+[workspace]
+resolver = "3"
+members=[
+	"crates/model",
+	"crates/proto-rs",
+	"crates/server",
+]
+
+[workspace.dependencies]

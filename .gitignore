@@ -137,3 +137,8 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Generated proto files
+# packages/proto-ts/generated/
+# server/crates/proto-rs/src/generated
+**/proto-*/**/generated
