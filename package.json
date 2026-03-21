@@ -6,7 +6,7 @@
 		"dev:host": "pnpm --filter host dev",
 		"dev:controller": "pnpm --filter controller dev",
 		"proto": "pnpm --filter @party/proto run generate",
-		"postinstall": "pnpm proto"
+		"postinstall": "pnpm proto && cd server && cargo build -p proto-rs"
 	},
 	"dependencies": {
 		"@bufbuild/protobuf": "^2.11.0"

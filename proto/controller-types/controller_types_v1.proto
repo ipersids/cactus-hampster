@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package controller;
+package controller.types.v1;
 
 message ControllerRequest {
 	oneof msg {
