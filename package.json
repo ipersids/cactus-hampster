@@ -5,8 +5,11 @@
 		"dev": "pnpm --filter host --filter controller dev",
 		"dev:host": "pnpm --filter host dev",
 		"dev:controller": "pnpm --filter controller dev",
-		"proto": "pnpm --filter @party/proto run generate",
-		"postinstall": "pnpm proto && cd server && cargo build -p proto-rs"
+		"proto:ts": "pnpm --filter @party/proto run generate",
+		"proto:rs": "cd server && cargo build -p proto-rs",
+		"proto": "pnpm proto:ts && pnpm proto:rs",
+		"typeshare": "cd server && typeshare . --lang=typescript --output-file=../packages/type-share/index.ts",
+		"postinstall": "pnpm proto && pnpm typeshare"
 	},
 	"dependencies": {
 		"@bufbuild/protobuf": "^2.11.0"
