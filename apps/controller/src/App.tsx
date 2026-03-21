@@ -1,11 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
 
+import { ControllerRequest } from '@party/proto/controller-types-v1'
+
 function App() {
 	const [count, setCount] = useState(0)
+	const controllerRequest = useMemo(
+		() =>
+			ControllerRequest.create({
+				ping: { msg: 'ping from controller app' },
+			}),
+		[]
+	)
+
+	useEffect(() => {
+		console.log('ControllerRequest:', controllerRequest)
+	}, [controllerRequest])
 
 	return (
 		<>
@@ -27,9 +40,11 @@ function App() {
 				>
 					Count is {count}
 				</button>
+				<p>{JSON.stringify(controllerRequest, null, 2)}</p>
 			</section>
 
-			<div className="ticks"></div>
+			<div className="ticks">
+			</div>
 
 			<section id="next-steps">
 				<div id="docs">
