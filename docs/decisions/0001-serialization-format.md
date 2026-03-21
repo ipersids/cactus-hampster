@@ -22,7 +22,7 @@ Data structures are defined in Rust using the #[typeshare] annotation, and TypeS
 
 ## Decision
 
-to be done.
+TypeShare is probably a good trade-off between how easy it is to setup and efficiency. We could come back to proto if performance becomes a bottleneck.
 
 ### Required prerequisites
 

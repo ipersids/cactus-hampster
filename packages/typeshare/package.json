@@ -1,0 +1,7 @@
+{
+  "name": "@cactus-hampster/typeshare",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./types/index.ts"
+    }
+}
