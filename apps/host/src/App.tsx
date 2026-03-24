@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { usePingSocket } from './hook/usePingWebsocket'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
@@ -8,6 +9,13 @@ import './App.css'
 
 function App() {
   const [count, setCount] = useState(0)
+  const { sendPing, lastMessage, isConnected } = usePingSocket()
+
+  useEffect(() => {
+    if (lastMessage) {
+      console.log("App.tsx received new message:", lastMessage);
+    }
+  }, [lastMessage]);
 
   return (
     <>
@@ -29,6 +37,18 @@ function App() {
         >
           Count is {count}
         </button>
+        <div>
+          <p>
+            {`Connection: ${isConnected ? "true" : "false"}`}
+          </p>
+        </div>
+        <button
+          className="counter"
+          onClick={sendPing}
+        >
+          Count is {count}
+        </button>
+        {lastMessage ? <p>{lastMessage}</p> : null}
       </section>
 
       <div className="ticks"></div>
