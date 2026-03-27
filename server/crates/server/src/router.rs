@@ -1,4 +1,4 @@
-use crate::handler::pong;
+use crate::handler::game_ws;
 use axum::{Router, routing::get};
 
 pub struct GameServerRouter {
@@ -7,7 +7,8 @@ pub struct GameServerRouter {
 
 impl GameServerRouter {
     pub fn init() -> Self {
-        let service = Router::new().route("/ping", get(pong));
+        // @TODO: set payload size limit
+        let service = Router::new().route("/ping", get(game_ws));
         Self { service }
     }
 }
