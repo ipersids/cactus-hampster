@@ -15,12 +15,26 @@ export interface PongPayload {
 	message: string;
 }
 
+export type ControllerEvent = 
+	| { status: "success", data: ControllerEventType }
+	| { status: "error", data: ErrorPayload };
+
+export type ControllerEventType = 
+	| { type: "ping", payload: PingPayload };
+
 export type HostEvent = 
 	| { status: "success", data: HostEventType }
 	| { status: "error", data: ErrorPayload };
 
 export type HostEventType = 
 	| { type: "ping", payload: PingPayload };
+
+export type ServerToControllerEvent = 
+	| { status: "success", data: ServerToControllerEventType }
+	| { status: "error", data: ErrorPayload };
+
+export type ServerToControllerEventType = 
+	| { type: "pong", payload: PongPayload };
 
 export type ServerToHostEvent = 
 	| { status: "success", data: ServerToHostEventType }
