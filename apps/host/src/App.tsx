@@ -1,27 +1,41 @@
 import { useState, useEffect } from 'react'
-import { usePingSocket } from './hook/usePingWebsocket'
+import useHostWebSocket, { createHostEvent } from './hook/useHostWebSocket'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
-  const { sendPing, lastMessage, isConnected, status, onConnect } = usePingSocket()
+  const [count, setCount] = useState(0);
+  const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    if (lastMessage) {
-      console.log("App.tsx received new message:", lastMessage);
-    }
-  }, [lastMessage]);
+  const { sendEvent, lastMessage, isConnected, status, connect } = useHostWebSocket();
 
   useEffect(() => {
     if (!isConnected) {
-      setCount(0)
+      setCount(0);
     }
-  }, [isConnected])
+  }, [isConnected]);
+
+  useEffect(() => {
+    if (lastMessage) {
+      const dateString = new Date().toLocaleString();
+      const data = JSON.stringify(lastMessage);
+      setMessage(`${dateString} - ${data}`);
+    }
+  }, [lastMessage]);
+
+  const ping = createHostEvent({
+    status: "success",
+    data: {
+      type: 'ping',
+      payload: {
+        message: "Hello from Controller!"
+      }
+    }
+  });
 
   return (
     <section id="center">
       <div>
-        <h1>Get started</h1>
+        <h1>I'm Host</h1>
       </div>
 
       <div>
@@ -33,18 +47,18 @@ function App() {
         className="counter"
         onClick={() => {
           if (!isConnected) {
-            onConnect()
+            connect();
           } else {
-            setCount((count) => count + 1)
-            sendPing()
+            setCount((count) => count + 1);
+            sendEvent(ping);
           }
         }}
       >
         {`Press to ${isConnected ? `Ping server ${count}` : 'connect'}`}
       </button>
-      {lastMessage ? <p>{lastMessage}</p> : null}
+      {message ? <p>{message}</p> : null}
     </section>
   )
 }
 
-export default App
+export default App;
