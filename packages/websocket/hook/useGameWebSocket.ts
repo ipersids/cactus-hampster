@@ -36,7 +36,7 @@ const useGameWebSocket = <TServerEvent = unknown, TClientEvent = unknown>({
   connect = false,
   parseEvent,
 }: GameSocketProps<TServerEvent>) => {
-  const [shouldConnect, setShouldConnect] = useState(connect);
+  const [autoConnect, setAutoConnect] = useState(connect);
   const onEventRef = useRef(onEvent);
   const onErrorRef = useRef(onError);
 
@@ -56,7 +56,7 @@ const useGameWebSocket = <TServerEvent = unknown, TClientEvent = unknown>({
   const { sendMessage, readyState, getWebSocket } = useWebSocket(
     url,
     {
-      shouldReconnect: () => shouldConnect,
+      shouldReconnect: () => autoConnect,
       reconnectAttempts: 15,
       reconnectInterval: 2000,
 
@@ -85,7 +85,7 @@ const useGameWebSocket = <TServerEvent = unknown, TClientEvent = unknown>({
         interval: 30_000,
       },
     },
-    shouldConnect
+    autoConnect
   );
 
   const sendEvent = useCallback(
@@ -103,11 +103,11 @@ const useGameWebSocket = <TServerEvent = unknown, TClientEvent = unknown>({
   );
 
   const connectSocket = useCallback(() => {
-    setShouldConnect(true);
+    setAutoConnect(true);
   }, []);
 
   const disconnectSocket = useCallback(() => {
-    setShouldConnect(false);
+    setAutoConnect(false);
     getWebSocket()?.close();
   }, [getWebSocket]);
 

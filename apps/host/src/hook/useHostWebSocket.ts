@@ -11,7 +11,6 @@ const useHostWebSocket = () => {
   const { sendEvent, isConnected, status, connect, disconnect } = useGameWebSocket<ServerEvent, HostEvent>({
     url: SOCKET_URL,
     onEvent: (event: ServerEvent) => setLastMessage(event),
-    onError: (_) => disconnect(),
     connect: false,
     parseEvent: (msg: MessageEvent<string>) => JSON.parse(msg.data) as ServerEvent,
   });

@@ -1,4 +1,4 @@
-use crate::shared_types::host::{ErrorPayload, PingPayload, PongPayload};
+use crate::shared_types::common::{ErrorPayload, PingPayload, PongPayload};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
