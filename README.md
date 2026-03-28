@@ -1,1 +1,1 @@
-# Pretty Decent Party Game Platfrom
+# Pretty Decent Party Game Platform

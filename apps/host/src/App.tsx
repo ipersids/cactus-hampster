@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import useHostWebSocket, { createHostEvent } from './hook/useHostWebSocket'
-import './App.css'
+import { useState, useEffect } from 'react';
+import useHostWebSocket, { createHostEvent } from './hook/useHostWebSocket';
+import './App.css';
 
 function App() {
   const [count, setCount] = useState(0);
@@ -27,9 +27,9 @@ function App() {
     data: {
       type: 'ping',
       payload: {
-        message: "Hello from Controller!"
+        message: "Hello from Host!",
       }
-    }
+    },
   });
 
   return (
@@ -58,7 +58,7 @@ function App() {
       </button>
       {message ? <p>{message}</p> : null}
     </section>
-  )
+  );
 }
 
 export default App;

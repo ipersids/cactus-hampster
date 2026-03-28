@@ -28,7 +28,7 @@ const statusMap = {
 //  - tracing logs?
 //  - unit/integration test
 //  - heartbeat will keep connection alive until tab is open, so, we should
-//    kill connection after reasonable unactive period?
+//    kill connection after a reasonable inactive period?
 const useGameWebSocket = <TServerEvent = unknown, TClientEvent = unknown>({
   url,
   onEvent,
@@ -61,7 +61,7 @@ const useGameWebSocket = <TServerEvent = unknown, TClientEvent = unknown>({
       reconnectInterval: 2000,
 
       onMessage: (msg) => {
-        if (msg.data === 'pong') return
+        if (msg.data === 'pong') return;
         try {
           const data = parser(msg);
           onEventRef.current?.(data);
@@ -94,7 +94,7 @@ const useGameWebSocket = <TServerEvent = unknown, TClientEvent = unknown>({
         sendMessage(JSON.stringify(command));
       } else {
         console.warn(
-          "Tryed to send event while socket was:",
+          "Tried to send event while socket was:",
           statusMap[readyState]
         );
       }

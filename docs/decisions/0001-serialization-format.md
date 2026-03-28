@@ -22,7 +22,7 @@ Data structures are defined in Rust using the #[typeshare] annotation, and TypeS
 
 ## Decision
 
-TypeShare is probably a good trade-off between how easy it is to setup and efficiency. We could come back to proto if performance becomes a bottleneck.
+TypeShare is probably a good trade-off between how easy it is to set up and efficiency. We could come back to proto if performance becomes a bottleneck.
 
 ### Required prerequisites
 
@@ -66,7 +66,7 @@ This single command:
 - Generates Rust types from Proto files
 - Generates TypeScript types from Rust structs (TypeShare)
 
-To see commands, what it use, check scripts in `./package.json`:
+To see commands and what they use, check scripts in `./package.json`:
 ```json
 "scripts": {
 	...
@@ -113,7 +113,7 @@ This project uses a **monorepo** structure to keep all code in a single reposito
 
 |  | Protocol buffer | TypeShare | Comment |
 | :-- | :---: | :--: | :-- |
-| **Dev Setup Complexity** | Medium | Low | Proto requires `protoc` installation and build scripts. Proto files standardized (Proto syntax). TypeShare is just a Rust crate and CLI tool. Protobuf is more complicated to setup. |
+| **Dev Setup Complexity** | Medium | Low | Proto requires `protoc` installation and build scripts. Proto files are standardized (Proto syntax). TypeShare is just a Rust crate and CLI tool. Protobuf is more complicated to set up. |
 | **Message Size** | 33 bytes (binary) | 66 bytes (binary as MessagePack) | Size for data `{ "userName": "Martin", "favoriteNumber": 1337, "interests": ["daydreaming", "hacking"] }` |
 | **Source of Truth** | `.proto` files | Rust structs | Proto is language-agnostic. TypeShare is Rust-first. |
 | **Type Safety** | Compile-time | Compile-time | Both provide full type safety |
