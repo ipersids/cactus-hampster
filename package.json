@@ -7,8 +7,5 @@
 		"dev:controller": "pnpm --filter controller dev",
 		"typeshare": "cd server && typeshare . --lang=typescript --output-file=../packages/typeshare/types/index.ts",
 		"postinstall": "pnpm typeshare"
-	},
-	"dependencies": {
-		"@bufbuild/protobuf": "^2.11.0"
 	}
 }

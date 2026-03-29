@@ -1,22 +1,16 @@
-use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
+pub mod local_types;
+mod shared;
 
-#[typeshare]
-#[derive(Serialize, Deserialize)]
-pub struct PingMessage {
-    pub msg: String,
-}
+pub mod shared_types {
+    pub mod common {
+        pub use crate::shared::common_types::{ErrorPayload, PingPayload, PongPayload};
+    }
 
-#[typeshare]
-#[derive(Serialize, Deserialize)]
-pub struct PongMessage {
-    pub msg: String,
-}
+    pub mod host {
+        pub use crate::shared::host_types::{HostEvent, ServerToHostEvent};
+    }
 
-#[typeshare]
-#[derive(Serialize, Deserialize)]
-#[serde(tag = "type", content = "content")]
-pub enum ControllerMessage {
-    Ping(PingMessage),
-    Pong(PongMessage),
+    pub mod controller {
+        pub use crate::shared::controller_types::{ControllerEvent, ServerToControllerEvent};
+    }
 }
