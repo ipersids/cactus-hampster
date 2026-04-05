@@ -1,62 +1,85 @@
-import { useState, useEffect } from 'react';
-import useControllerWebSocket, { createControllerEvent } from './hook/useControllerWebSocket';
+import { useEffect, useCallback } from 'react';
+import useControllerWebSocket from './hook/useControllerWebSocket';
+import JoinScreen from './components/JoinScreen';
+import WaitingScreen from './components/WaitingScreen';
+import GameController from './components/GameController';
 import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0);
-  const [message, setMessage] = useState('');
+  const {
+    isConnected,
+    connect,
+    phase,
+    sessionCode,
+    errorMessage,
+    joinSession,
+    sendInput,
+  } = useControllerWebSocket();
 
-  const { sendEvent, lastMessage, isConnected, status, connect } = useControllerWebSocket();
-
+  // Connect on mount
   useEffect(() => {
     if (!isConnected) {
-      setCount(0);
+      connect();
     }
-  }, [isConnected]);
+  }, [isConnected, connect]);
 
-  useEffect(() => {
-    if (lastMessage) {
-      const dateString = new Date().toLocaleString();
-      const data = JSON.stringify(lastMessage);
-      setMessage(`${dateString} - ${data}`);
-    }
-  }, [lastMessage]);
+  const handleJoin = useCallback((code: string, nickname: string) => {
+    joinSession(code, nickname);
+  }, [joinSession]);
 
-  const ping = createControllerEvent({
-    status: "success",
-    data: {
-      type: 'ping',
-      payload: {
-        message: "Hello from Controller!",
-      }
-    },
-  });
+  // Error state
+  if (phase === 'error') {
+    return (
+      <section id="center">
+        <div className="error-screen">
+          <h1>Error</h1>
+          <p>{errorMessage || 'Something went wrong'}</p>
+          <button onClick={() => window.location.reload()} className="retry-button">
+            Try Again
+          </button>
+        </div>
+      </section>
+    );
+  }
 
+  // Connecting state - only show when WebSocket is not connected
+  if (!isConnected) {
+    return (
+      <section id="center">
+        <div className="connecting">
+          <p>Connecting...</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Join screen (when connected but not yet in a session)
+  if (phase !== 'waiting' && phase !== 'playing') {
+    return (
+      <section id="center">
+        <JoinScreen onJoin={handleJoin} isConnecting={phase === 'joining'} />
+      </section>
+    );
+  }
+
+  // Waiting for game to start
+  if (phase === 'waiting' && sessionCode) {
+    return (
+      <section id="center">
+        <WaitingScreen sessionCode={sessionCode} />
+      </section>
+    );
+  }
+
+  // Playing
+  if (phase === 'playing') {
+    return <GameController onInput={sendInput} />;
+  }
+
+  // Default join screen
   return (
     <section id="center">
-      <div>
-        <h1>I'm Controller</h1>
-      </div>
-
-      <div>
-        <p>
-          {`Websocket status: ${isConnected ? "connected" : "disconnected"} (${status})`}
-        </p>
-      </div>
-      <button
-        className="counter"
-        onClick={() => {
-          if (!isConnected) {
-            connect();
-          } else {
-            setCount((count) => count + 1);
-            sendEvent(ping);
-          }
-        }}
-      >
-        {`Press to ${isConnected ? `Ping server ${count}` : 'connect'}`}
-      </button>
-      {message ? <p>{message}</p> : null}
+      <JoinScreen onJoin={handleJoin} isConnecting={false} />
     </section>
   );
 }

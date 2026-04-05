@@ -1,62 +1,97 @@
-import { useState, useEffect } from 'react';
-import useHostWebSocket, { createHostEvent } from './hook/useHostWebSocket';
+import { useState, useEffect, useCallback } from 'react';
+import useHostWebSocket from './hook/useHostWebSocket';
+import Lobby from './components/Lobby';
+import SpaceBattleGame from './components/games/SpaceBattle/SpaceBattleGame';
 import './App.css';
 
+type GamePhase = 'connecting' | 'lobby' | 'playing';
+
 function App() {
-  const [count, setCount] = useState(0);
-  const [message, setMessage] = useState('');
+  const [phase, setPhase] = useState<GamePhase>('connecting');
+  const [currentGame, setCurrentGame] = useState<string | null>(null);
 
-  const { sendEvent, lastMessage, isConnected, status, connect } = useHostWebSocket();
+  const {
+    isConnected,
+    status,
+    connect,
+    sessionCode,
+    players,
+    getPlayerInputs,
+    createSession,
+    startGame,
+  } = useHostWebSocket();
 
+  // Connect and create session on mount
   useEffect(() => {
-    if (!isConnected) {
-      setCount(0);
+    if (!isConnected && phase === 'connecting') {
+      connect();
     }
-  }, [isConnected]);
+  }, [isConnected, phase, connect]);
 
+  // Create session once connected
   useEffect(() => {
-    if (lastMessage) {
-      const dateString = new Date().toLocaleString();
-      const data = JSON.stringify(lastMessage);
-      setMessage(`${dateString} - ${data}`);
+    if (isConnected && !sessionCode) {
+      createSession();
     }
-  }, [lastMessage]);
+  }, [isConnected, sessionCode, createSession]);
 
-  const ping = createHostEvent({
-    status: "success",
-    data: {
-      type: 'ping',
-      payload: {
-        message: "Hello from Host!",
-      }
-    },
-  });
+  // Move to lobby once session is created
+  useEffect(() => {
+    if (sessionCode && phase === 'connecting') {
+      setPhase('lobby');
+    }
+  }, [sessionCode, phase]);
+
+  const handleStartGame = useCallback((gameType: string) => {
+    startGame(gameType);
+    setCurrentGame(gameType);
+    setPhase('playing');
+  }, [startGame]);
+
+  const handleGameEnd = useCallback(() => {
+    setCurrentGame(null);
+    setPhase('lobby');
+  }, []);
+
+  // Connecting state
+  if (phase === 'connecting') {
+    return (
+      <section id="center">
+        <div className="connecting">
+          <h1>Party Games</h1>
+          <p>Connecting to server... ({status})</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Lobby state
+  if (phase === 'lobby' && sessionCode) {
+    return (
+      <section id="center">
+        <Lobby
+          sessionCode={sessionCode}
+          players={players}
+          onStartGame={handleStartGame}
+        />
+      </section>
+    );
+  }
+
+  // Playing state
+  if (phase === 'playing' && currentGame === 'spaceBattle') {
+    return (
+      <SpaceBattleGame
+        players={players}
+        getPlayerInputs={getPlayerInputs}
+        onGameEnd={handleGameEnd}
+      />
+    );
+  }
 
   return (
     <section id="center">
-      <div>
-        <h1>I'm Host</h1>
-      </div>
-
-      <div>
-        <p>
-          {`Websocket status: ${isConnected ? "connected" : "disconnected"} (${status})`}
-        </p>
-      </div>
-      <button
-        className="counter"
-        onClick={() => {
-          if (!isConnected) {
-            connect();
-          } else {
-            setCount((count) => count + 1);
-            sendEvent(ping);
-          }
-        }}
-      >
-        {`Press to ${isConnected ? `Ping server ${count}` : 'connect'}`}
-      </button>
-      {message ? <p>{message}</p> : null}
+      <p>Something went wrong. Please refresh.</p>
     </section>
   );
 }

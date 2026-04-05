@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     host: true,
     proxy: {
-      '/ping': {
+      '/ws': {
         target: 'ws://localhost:8080',
         ws: true,
         changeOrigin: true,
