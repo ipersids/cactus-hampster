@@ -8,7 +8,7 @@ The foundation — players can create/join sessions and communicate.
 
 - [ ] Session struct: id, join code, host connection, player connections, created_at
 - [ ] SessionManager: create, join, leave, get, cleanup expired (5h timeout)
-- [ ] Generate 4-6 character join codes (avoid ambiguous chars: 0/O, 1/I/l)
+- [ ] Generate 4-6 character join codes (avoid ambiguous chars: 0/O, 1/I/l) or QR codes
 - [ ] In-memory storage (HashMap with RwLock)
 
 ### 1.2 Connection Routing

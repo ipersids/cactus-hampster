@@ -6,6 +6,10 @@ A platform for party games where players use their phones as controllers and the
 
 **Architecture**: Host-authoritative. The server manages sessions and relays messages; the host app runs all game logic and rendering.
 
+## Claude instructions
+
+- Never run the server, controller or the host. Developer will run them
+
 ## Tech Stack
 
 - **Server**: Rust (Axum, Tokio) — WebSocket server, session management
