@@ -1,4 +1,7 @@
-use crate::shared_types::common::{ErrorPayload, PingPayload, PongPayload};
+use crate::shared_types::common::{
+    ControllerInputPayload, ErrorPayload, PingPayload, PlayerJoinedPayload, PlayerLeftPayload,
+    PongPayload, CreateSessionPayload, SessionCreatedPayload, StartGamePayload,
+};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -17,6 +20,10 @@ pub enum ServerToHostEvent {
 #[serde(tag = "type", content = "payload", rename_all = "camelCase")]
 pub enum ServerToHostEventType {
     Pong(PongPayload),
+    SessionCreated(SessionCreatedPayload),
+    PlayerJoined(PlayerJoinedPayload),
+    PlayerLeft(PlayerLeftPayload),
+    ControllerInput(ControllerInputPayload),
 }
 
 #[typeshare]
@@ -34,4 +41,6 @@ pub enum HostEvent {
 #[serde(tag = "type", content = "payload", rename_all = "camelCase")]
 pub enum HostEventType {
     Ping(PingPayload),
+    CreateSession(CreateSessionPayload),
+    StartGame(StartGamePayload),
 }
