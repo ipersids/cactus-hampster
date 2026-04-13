@@ -67,7 +67,7 @@ async fn run_controller_connection(ws: WebSocket, state: Arc<AppState>) {
                 }
 
                 if let Ok(event) = serde_json::from_str::<ControllerEvent>(payload_str) {
-                    handle_controller_event(event, &state, &tx, &mut session).await;
+                    handle_controller_event(event, &state, &tx, &mut session);
                 } else {
                     eprintln!("Failed to parse controller event");
                 }
@@ -77,12 +77,12 @@ async fn run_controller_connection(ws: WebSocket, state: Arc<AppState>) {
         }
     }
 
-    handle_disconnect(&state, session).await;
+    handle_disconnect(&state, session);
     send_task.abort();
     println!("Controller disconnected");
 }
 
-async fn handle_controller_event(
+fn handle_controller_event(
     event: ControllerEvent,
     state: &Arc<AppState>,
     tx: &UnboundedSender<ControllerMessage>,
@@ -94,8 +94,8 @@ async fn handle_controller_event(
 
     match event_type {
         ControllerEventType::Ping(ping) => handle_ping(tx, ping),
-        ControllerEventType::JoinSession(join) => handle_join_session(state, tx, session, join).await,
-        ControllerEventType::PlayerInput(input) => handle_player_input(state, session, input).await,
+        ControllerEventType::JoinSession(join) => handle_join_session(state, tx, session, join),
+        ControllerEventType::PlayerInput(input) => handle_player_input(state, session, input),
     }
 }
 
@@ -103,18 +103,31 @@ fn handle_ping(tx: &UnboundedSender<ControllerMessage>, ping: PingPayload) {
     let response = ServerToControllerEventType::Pong(PongPayload {
         message: ping.message,
     });
-    let _ = tx.send(ControllerMessage::Event(response.into_response()));
+    if let Some(msg) = response.into_response() {
+        let _ = tx.send(ControllerMessage::Event(msg));
+    }
 }
 
-async fn handle_join_session(
+fn handle_join_session(
     state: &Arc<AppState>,
     tx: &UnboundedSender<ControllerMessage>,
     session: &mut ControllerSession,
     join: JoinSessionPayload,
 ) {
+    // Clean up any existing player record before joining
+    if let (Some(old_code), Some(old_pid)) = (session.session_code.take(), session.player_id.take()) {
+        if state.remove_player_from_session(&old_code, &old_pid).is_some() {
+            if let Some(host_tx) = state.get_host_sender(&old_code) {
+                let event = ServerToHostEventType::PlayerLeft(PlayerLeftPayload { player_id: old_pid });
+                if let Some(msg) = event.into_response() {
+                    let _ = host_tx.send(HostMessage::Event(msg));
+                }
+            }
+        }
+    }
+
     let result = state
-        .add_player_to_session(&join.session_code, join.player_name.clone(), tx.clone())
-        .await;
+        .add_player_to_session(&join.session_code, join.player_name.clone(), tx.clone());
 
     match result {
         Ok(player) => {
@@ -126,25 +139,29 @@ async fn handle_join_session(
                 player_id: player.id.clone(),
                 session_code: join.session_code.clone(),
             });
-            let _ = tx.send(ControllerMessage::Event(response.into_response()));
+            if let Some(msg) = response.into_response() {
+                let _ = tx.send(ControllerMessage::Event(msg));
+            }
 
             // Notify host
-            notify_host_player_joined(state, &join.session_code, player.id, join.player_name).await;
+            notify_host_player_joined(state, &join.session_code, player.id, join.player_name);
         }
         Err(e) => {
             let error = ErrorPayload { code: 404, message: e };
-            let _ = tx.send(ControllerMessage::Event(error.into_response()));
+            if let Some(msg) = error.into_response() {
+                let _ = tx.send(ControllerMessage::Event(msg));
+            }
         }
     }
 }
 
-async fn notify_host_player_joined(
+fn notify_host_player_joined(
     state: &Arc<AppState>,
     session_code: &str,
     player_id: String,
     player_name: String,
 ) {
-    let Some(host_tx) = state.get_host_sender(session_code).await else {
+    let Some(host_tx) = state.get_host_sender(session_code) else {
         return;
     };
 
@@ -154,10 +171,12 @@ async fn notify_host_player_joined(
             player_name,
         },
     });
-    let _ = host_tx.send(HostMessage::Event(event.into_response()));
+    if let Some(msg) = event.into_response() {
+        let _ = host_tx.send(HostMessage::Event(msg));
+    }
 }
 
-async fn handle_player_input(
+fn handle_player_input(
     state: &Arc<AppState>,
     session: &ControllerSession,
     input: PlayerInputPayload,
@@ -166,7 +185,7 @@ async fn handle_player_input(
         return;
     };
 
-    let Some(host_tx) = state.get_host_sender(code).await else {
+    let Some(host_tx) = state.get_host_sender(code) else {
         return;
     };
 
@@ -175,22 +194,26 @@ async fn handle_player_input(
         input_type: input.input_type,
         data: input.data,
     });
-    let _ = host_tx.send(HostMessage::Event(event.into_response()));
+    if let Some(msg) = event.into_response() {
+        let _ = host_tx.send(HostMessage::Event(msg));
+    }
 }
 
-async fn handle_disconnect(state: &Arc<AppState>, session: ControllerSession) {
+fn handle_disconnect(state: &Arc<AppState>, session: ControllerSession) {
     let (Some(code), Some(pid)) = (session.session_code, session.player_id) else {
         return;
     };
 
-    if state.remove_player_from_session(&code, &pid).await.is_none() {
+    if state.remove_player_from_session(&code, &pid).is_none() {
         return;
     }
 
-    let Some(host_tx) = state.get_host_sender(&code).await else {
+    let Some(host_tx) = state.get_host_sender(&code) else {
         return;
     };
 
     let event = ServerToHostEventType::PlayerLeft(PlayerLeftPayload { player_id: pid });
-    let _ = host_tx.send(HostMessage::Event(event.into_response()));
+    if let Some(msg) = event.into_response() {
+        let _ = host_tx.send(HostMessage::Event(msg));
+    }
 }

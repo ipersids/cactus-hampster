@@ -1,6 +1,8 @@
+use dashmap::mapref::entry::Entry;
+use dashmap::DashMap;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::mpsc;
 use uuid::Uuid;
 
 pub enum HostMessage {
@@ -28,7 +30,7 @@ pub struct Session {
 
 #[derive(Default)]
 pub struct AppState {
-    pub sessions: RwLock<HashMap<String, Session>>,
+    pub sessions: DashMap<String, Session>,
 }
 
 impl AppState {
@@ -36,9 +38,9 @@ impl AppState {
         Arc::new(Self::default())
     }
 
-    pub async fn generate_session_code(&self) -> String {
+    pub fn create_session(&self, host_sender: mpsc::UnboundedSender<HostMessage>) -> String {
         use rand::Rng;
-        let sessions = self.sessions.read().await;
+
         loop {
             let code: String = (0..4)
                 .map(|_| {
@@ -46,41 +48,35 @@ impl AppState {
                     (b'A' + idx) as char
                 })
                 .collect();
-            if !sessions.contains_key(&code) {
+
+            if let Entry::Vacant(entry) = self.sessions.entry(code.clone()) {
+                let session = Session {
+                    code: code.clone(),
+                    host_sender,
+                    players: HashMap::new(),
+                };
+                entry.insert(session);
                 return code;
             }
         }
     }
 
-    pub async fn create_session(
-        &self,
-        code: String,
-        host_sender: mpsc::UnboundedSender<HostMessage>,
-    ) {
-        let session = Session {
-            code: code.clone(),
-            host_sender,
-            players: HashMap::new(),
-        };
-        self.sessions.write().await.insert(code, session);
-    }
-
-    pub async fn remove_session(&self, code: &str) {
-        if let Some(session) = self.sessions.write().await.remove(code) {
+    pub fn remove_session(&self, code: &str) {
+        if let Some((_, session)) = self.sessions.remove(code) {
             for (_, player) in session.players {
                 let _ = player.sender.send(ControllerMessage::Close);
             }
         }
     }
 
-    pub async fn add_player_to_session(
+    pub fn add_player_to_session(
         &self,
         session_code: &str,
         player_name: String,
         sender: mpsc::UnboundedSender<ControllerMessage>,
     ) -> Result<Player, String> {
-        let mut sessions = self.sessions.write().await;
-        let session = sessions
+        let mut session = self
+            .sessions
             .get_mut(session_code)
             .ok_or_else(|| "Session not found".to_string())?;
 
@@ -94,30 +90,27 @@ impl AppState {
         Ok(player)
     }
 
-    pub async fn remove_player_from_session(
+    pub fn remove_player_from_session(
         &self,
         session_code: &str,
         player_id: &str,
     ) -> Option<Player> {
-        let mut sessions = self.sessions.write().await;
-        sessions
+        self.sessions
             .get_mut(session_code)
-            .and_then(|s| s.players.remove(player_id))
+            .and_then(|mut s| s.players.remove(player_id))
     }
 
-    pub async fn get_host_sender(
+    pub fn get_host_sender(
         &self,
         session_code: &str,
     ) -> Option<mpsc::UnboundedSender<HostMessage>> {
         self.sessions
-            .read()
-            .await
             .get(session_code)
             .map(|s| s.host_sender.clone())
     }
 
-    pub async fn broadcast_to_controllers(&self, session_code: &str, message: &str) {
-        if let Some(session) = self.sessions.read().await.get(session_code) {
+    pub fn broadcast_to_controllers(&self, session_code: &str, message: &str) {
+        if let Some(session) = self.sessions.get(session_code) {
             for (_, player) in &session.players {
                 let _ = player
                     .sender

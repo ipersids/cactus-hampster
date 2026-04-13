@@ -14,3 +14,4 @@ model = { path = "../model" }
 uuid = { version = "1", features = ["v4"] }
 rand = "0.8"
 futures = "0.3"
+dashmap = "6.1.0"

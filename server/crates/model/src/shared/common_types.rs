@@ -69,8 +69,15 @@ pub struct PlayerLeftPayload {
 // Player input
 #[typeshare]
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum InputType {
+    ButtonPress,
+    ButtonRelease,
+}
+
+#[typeshare]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlayerInputPayload {
-    pub input_type: String,
+    pub input_type: InputType,
     pub data: String,
 }
 
@@ -78,7 +85,7 @@ pub struct PlayerInputPayload {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ControllerInputPayload {
     pub player_id: String,
-    pub input_type: String,
+    pub input_type: InputType,
     pub data: String,
 }
 

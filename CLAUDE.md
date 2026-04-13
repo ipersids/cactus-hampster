@@ -43,7 +43,7 @@ pnpm install
 # Run both frontend apps (host: 5173, controller: 5174)
 pnpm dev
 
-# Run server (default: 127.0.0.1:3000)
+# Run server (default: 127.0.0.1:8080)
 cd server && cargo run
 
 # Regenerate TS types from Rust
@@ -113,6 +113,6 @@ When adding new message types:
 
 ## Development Notes
 
-- Controller runs on port 5174, Host on 5173, Server on 3000
+- Controller runs on port 5174, Host on 5173, Server on 8080
 - CORS not yet configured — will need it for production
 - No database yet — sessions are in-memory only

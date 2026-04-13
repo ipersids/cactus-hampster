@@ -55,7 +55,7 @@ async fn run_host_connection(ws: WebSocket, state: Arc<AppState>) {
                 }
 
                 if let Ok(event) = serde_json::from_str::<HostEvent>(payload_str) {
-                    handle_host_event(event, &state, &tx, &mut session_code).await;
+                    handle_host_event(event, &state, &tx, &mut session_code);
                 } else {
                     eprintln!("Failed to parse host event");
                 }
@@ -66,13 +66,13 @@ async fn run_host_connection(ws: WebSocket, state: Arc<AppState>) {
     }
 
     if let Some(code) = session_code {
-        state.remove_session(&code).await;
+        state.remove_session(&code);
     }
     send_task.abort();
     println!("Host disconnected");
 }
 
-async fn handle_host_event(
+fn handle_host_event(
     event: HostEvent,
     state: &Arc<AppState>,
     tx: &UnboundedSender<HostMessage>,
@@ -84,8 +84,8 @@ async fn handle_host_event(
 
     match event_type {
         HostEventType::Ping(ping) => handle_ping(tx, ping),
-        HostEventType::CreateSession(_) => handle_create_session(state, tx, session_code).await,
-        HostEventType::StartGame(_) => handle_start_game(state, session_code).await,
+        HostEventType::CreateSession(_) => handle_create_session(state, tx, session_code),
+        HostEventType::StartGame(_) => handle_start_game(state, session_code),
     }
 }
 
@@ -93,31 +93,39 @@ fn handle_ping(tx: &UnboundedSender<HostMessage>, ping: PingPayload) {
     let response = ServerToHostEventType::Pong(PongPayload {
         message: ping.message,
     });
-    let _ = tx.send(HostMessage::Event(response.into_response()));
+    if let Some(msg) = response.into_response() {
+        let _ = tx.send(HostMessage::Event(msg));
+    }
 }
 
-async fn handle_create_session(
+fn handle_create_session(
     state: &Arc<AppState>,
     tx: &UnboundedSender<HostMessage>,
     session_code: &mut Option<String>,
 ) {
-    let code = state.generate_session_code().await;
-    state.create_session(code.clone(), tx.clone()).await;
+    // Clean up any existing session before creating a new one
+    if let Some(old_code) = session_code.take() {
+        state.remove_session(&old_code);
+    }
+
+    let code = state.create_session(tx.clone());
     *session_code = Some(code.clone());
 
     let response = ServerToHostEventType::SessionCreated(SessionCreatedPayload {
         session_code: code,
     });
-    let _ = tx.send(HostMessage::Event(response.into_response()));
+    if let Some(msg) = response.into_response() {
+        let _ = tx.send(HostMessage::Event(msg));
+    }
 }
 
-async fn handle_start_game(state: &Arc<AppState>, session_code: &Option<String>) {
+fn handle_start_game(state: &Arc<AppState>, session_code: &Option<String>) {
     let Some(code) = session_code else { return };
 
     let response = ServerToControllerEventType::GameStarted(GameStartedPayload {
         game_type: "default".to_string(),
     });
-    state
-        .broadcast_to_controllers(code, &response.into_response())
-        .await;
+    if let Some(msg) = response.into_response() {
+        state.broadcast_to_controllers(code, &msg);
+    }
 }
