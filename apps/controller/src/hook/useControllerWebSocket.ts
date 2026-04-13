@@ -2,7 +2,7 @@ import useGameWebSocket, { createEvent } from '@cactus-hampster/websocket';
 import type { ServerToControllerEvent as ServerEvent, ControllerEvent } from '@cactus-hampster/typeshare';
 import { useState } from 'react';
 
-const SOCKET_URL = '/ping';
+const SOCKET_URL = '/ws/controller';
 
 export const createControllerEvent = (event: ControllerEvent) => createEvent(event);
 
